@@ -664,7 +664,7 @@ func parseLockFields(lockPath string) (map[string]string, error) {
 		return nil, err
 	}
 	defer f.Close()
-	return readLockFields(f)
+	return readReclaimFields(f)
 }
 
 // readLockFields parses lock-file lines from an already-open source, so a

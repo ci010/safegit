@@ -1,8 +1,12 @@
 package lock
 
 import (
-	"golang.org/x/sys/windows"
+	"errors"
+	"io"
 	"os"
+	"time"
+
+	"golang.org/x/sys/windows"
 )
 
 func openReclaim(path string) (*os.File, error) {
@@ -28,4 +32,21 @@ func statIdentity(path string) (os.FileInfo, error) {
 	}
 	defer f.Close()
 	return f.Stat()
+}
+
+// Another contender may briefly hold the mandatory byte-range reclamation
+// lock while checking our live PID. That does not make our immutable metadata
+// unreadable permanently. Retry only that Windows condition, bounded, on the
+// same open file so we never accidentally read a replacement path.
+func readReclaimFields(f *os.File) (map[string]string, error) {
+	for attempt := 0; ; attempt++ {
+		fields, err := readLockFields(f)
+		if !errors.Is(err, windows.ERROR_LOCK_VIOLATION) || attempt >= 100 {
+			return fields, err
+		}
+		time.Sleep(time.Millisecond)
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return nil, err
+		}
+	}
 }

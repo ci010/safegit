@@ -12,3 +12,5 @@ func lockReclaim(f *os.File) error {
 }
 func openReclaim(path string) (*os.File, error)     { return os.Open(path) }
 func statIdentity(path string) (os.FileInfo, error) { return os.Stat(path) }
+
+func readReclaimFields(f *os.File) (map[string]string, error) { return readLockFields(f) }
