@@ -37,6 +37,9 @@ func TestBisectDeclaredSubcommandsNative(t *testing.T) {
 			}
 			switch sub {
 			case "view":
+				// On headless Unix Git otherwise selects `git log` instead of
+				// invoking gitk. Our viewer is a non-GUI fixture on every OS.
+				t.Setenv("DISPLAY", ":safegit-test")
 				shim := t.TempDir()
 				env = append(env, "GIT_EXEC_PATH="+shim)
 				viewMarker = filepath.Join(t.TempDir(), "viewer-ran")
@@ -71,7 +74,7 @@ func TestBisectDeclaredSubcommandsNative(t *testing.T) {
 				if _, err := os.Stat(filepath.Join(dir, ".git", "BISECT_LOG")); err != nil {
 					t.Fatalf("bisect state missing after %s: %v", sub, err)
 				}
-				if sub == "run" && !strings.Contains(out+stderr, "first bad commit") {
+				if sub == "run" && !strings.Contains(out+stderr, "first bad commit") && !strings.Contains(out+stderr, "first 'bad' commit") {
 					t.Fatalf("run did not complete a real bisection: %s %s", out, stderr)
 				}
 				testutil.Git(t, dir, "bisect", "reset")
