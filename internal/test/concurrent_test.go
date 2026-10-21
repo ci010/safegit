@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -50,8 +51,12 @@ func runSuite(m *testing.M) int {
 		return 1
 	}
 	defer os.RemoveAll(tmpDir)
+	defer testutil.CleanupExecutables()
 
 	binPath := filepath.Join(tmpDir, "safegit")
+	if runtime.GOOS == "windows" {
+		binPath += ".exe"
+	}
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	cmd.Dir = projectRoot()
 	if out, err := cmd.CombinedOutput(); err != nil {

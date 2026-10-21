@@ -318,7 +318,7 @@ type holderIdentity struct {
 // against a known one -- the lock disappearing is itself a change worth polling
 // quickly after.
 func readHolderIdentity(path string) holderIdentity {
-	info, err := os.Stat(path)
+	info, err := statIdentity(path)
 	if err != nil {
 		return holderIdentity{}
 	}
@@ -388,7 +388,7 @@ func tryCreate(path, op string) (publication, error) {
 		return publication{}, err
 	}
 
-	info, err := os.Stat(tmpName)
+	info, err := statIdentity(tmpName)
 	if err != nil {
 		return publication{}, fmt.Errorf("identifying the lock file before publishing it: %w", err)
 	}
@@ -507,7 +507,7 @@ func releaseIfOurs(path string, published publication) error {
 		// lock.
 		return fmt.Errorf("releasing %s: the lock carries no published identity", path)
 	}
-	current, err := os.Stat(path)
+	current, err := statIdentity(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -517,7 +517,15 @@ func releaseIfOurs(path string, published publication) error {
 	if !os.SameFile(published.info, current) {
 		return nil
 	}
-	record, err := os.ReadFile(path)
+	f, err := openReclaim(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	record, err := io.ReadAll(f)
+	f.Close()
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -554,7 +562,7 @@ func releaseIfOurs(path string, published publication) error {
 //     (no start= field, or a platform that cannot report start times) the check
 //     fails closed and the lock is left alone.
 func IsStale(path string) bool {
-	f, err := os.Open(path)
+	f, err := openReclaim(path)
 	if err != nil {
 		// Unreadable lock -- treat as stale
 		return true
@@ -651,7 +659,7 @@ func ForceRelease(locksBaseDir, ref string, remove func(string) error) error {
 // file goes through it, so the file's format is described in exactly one place.
 // Unknown keys are kept; a line without '=' is ignored.
 func parseLockFields(lockPath string) (map[string]string, error) {
-	f, err := os.Open(lockPath)
+	f, err := openReclaim(lockPath)
 	if err != nil {
 		return nil, err
 	}
