@@ -39,7 +39,7 @@ func TestBisectDeclaredSubcommandsNative(t *testing.T) {
 			case "view":
 				// On headless Unix Git otherwise selects `git log` instead of
 				// invoking gitk. Our viewer is a non-GUI fixture on every OS.
-				t.Setenv("DISPLAY", ":safegit-test")
+				env = append(env, "DISPLAY=:safegit-test")
 				shim := t.TempDir()
 				env = append(env, "GIT_EXEC_PATH="+shim)
 				viewMarker = filepath.Join(t.TempDir(), "viewer-ran")
