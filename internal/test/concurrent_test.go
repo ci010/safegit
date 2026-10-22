@@ -228,6 +228,10 @@ func controlledEnv(t *testing.T, extra ...string) []string {
 	env = append(env,
 		"HOME="+home,
 		"USERPROFILE="+home,
+		// Windows libraries must not fall back to relative application-data
+		// paths inside the fixture repository (for example Microsoft/ crypto data).
+		"APPDATA="+filepath.Join(home, "AppData", "Roaming"),
+		"LOCALAPPDATA="+filepath.Join(home, "AppData", "Local"),
 		"XDG_CONFIG_HOME="+filepath.Join(home, ".config"),
 		"GIT_TERMINAL_PROMPT=0",
 		"LANG=C",

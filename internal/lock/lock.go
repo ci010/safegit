@@ -309,6 +309,7 @@ func Acquire(locksBaseDir, safegitDir, ref, op, sessionID string, timeout time.D
 type holderIdentity struct {
 	known bool
 	ino   uint64
+	info  os.FileInfo
 	size  int64
 	mod   time.Time
 }
@@ -322,7 +323,7 @@ func readHolderIdentity(path string) holderIdentity {
 	if err != nil {
 		return holderIdentity{}
 	}
-	return holderIdentity{known: true, ino: inodeOf(info), size: info.Size(), mod: info.ModTime()}
+	return holderIdentity{known: true, ino: inodeOf(info), info: info, size: info.Size(), mod: info.ModTime()}
 }
 
 // changedFrom reports whether this identity is a different lock file from prev.
@@ -334,7 +335,10 @@ func (h holderIdentity) changedFrom(prev holderIdentity) bool {
 	if !h.known {
 		return true
 	}
-	return h.ino != prev.ino || h.size != prev.size || !h.mod.Equal(prev.mod)
+	// SameFile uses the volume serial and file ID on Windows, where inodeOf
+	// cannot expose identity and timestamps may coincide on fast replacement.
+	return (h.info != nil && prev.info != nil && !os.SameFile(h.info, prev.info)) ||
+		h.ino != prev.ino || h.size != prev.size || !h.mod.Equal(prev.mod)
 }
 
 // tryCreate creates the lock file with its owner record already in it, failing
