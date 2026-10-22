@@ -97,7 +97,9 @@ coverage. Any other skipped ordinary test fails the checker.
 
 This fork does not run upstream rlsbl/GoReleaser publishing. `CI` has read-only
 repository permissions and builds five archives (Linux and macOS amd64/arm64,
-plus native Windows amd64). Windows ordinary integration tests run in four
+plus native Windows amd64). macOS ordinary regression uses the standard Intel
+runner pool; CGO-disabled macOS archives are cross-compiled on Linux to avoid
+unnecessary hosted macOS runner capacity dependencies. Windows ordinary integration tests run in four
 exhaustive disjoint shards; non-integration tests run separately, without
 `-short`. Linux retains the race detector and macOS retains ordinary regression.
 

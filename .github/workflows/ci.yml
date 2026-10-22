@@ -19,7 +19,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # Avoid the macOS arm64 hosted pool, which failed to acquire runners.
+        os: [ubuntu-latest, macos-15-intel]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -70,8 +71,8 @@ jobs:
         include:
           - {os: ubuntu-latest, goos: linux, goarch: amd64}
           - {os: ubuntu-latest, goos: linux, goarch: arm64}
-          - {os: macos-latest, goos: darwin, goarch: amd64}
-          - {os: macos-latest, goos: darwin, goarch: arm64}
+          - {os: ubuntu-latest, goos: darwin, goarch: amd64}
+          - {os: ubuntu-latest, goos: darwin, goarch: arm64}
           - {os: windows-latest, goos: windows, goarch: amd64}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
